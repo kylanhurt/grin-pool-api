@@ -1,6 +1,6 @@
 const networkRouter = require('express').Router()
 const db = require('../config/database.js')
-import { getConnection } from '../utils.js'
+import { getConnection, mergeBlocks } from '../utils.js'
 
 // gets network data for a range of blocks
 networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
@@ -28,28 +28,7 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
       (error, results, field) => {
         if (error) throw Error
         console.log('results is: ', results)
-        let output = []
-        results.forEach((resultsRow) => {
-          const index = output.findIndex(outputRow => outputRow.height === resultsRow.height)
-          if (index === -1) {
-            output.push({ 
-              difficulty: resultsRow.difficulty,
-              timestamp: resultsRow.timestamp,
-              height: resultsRow.height,
-              gps: [
-                {
-                  edge_bits: resultsRow.edge_bits,
-                  gps: resultsRow.gps
-                }
-              ]
-            })
-          } else {
-            output[index].gps.push({
-              edge_bits: resultsRow.edge_bits,
-              gps: resultsRow.gps
-            })
-          } 
-        })
+        const output = mergeBlocks(results)
         res.json(output)
       }
     )
