@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize')
 const db = require('../config/database.js')
 
-const Block = db.define('block', {
+const Block = db.define('blocks', {
   height: {
     type: Sequelize.BIGINT(20),
     primaryKey: true
@@ -61,7 +61,8 @@ const Block = db.define('block', {
     type: Sequelize.STRING(64)
   }
 }, {
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true
 })
 
 module.exports = Block
