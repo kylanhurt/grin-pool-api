@@ -1,5 +1,6 @@
 const networkRouter = require('express').Router()
 const db = require('../config/database.js')
+// var cache = require('express-redis-cache')()
 import { getConnection, mergeBlocks } from '../utils.js'
 
 // gets network data for a range of blocks
@@ -9,10 +10,9 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     const connection = getConnection()
     const queryOpts = {}
     if (!height || !range) throw new Error('No height or range field specified')
-    let max, min
-    max = parseInt(height)
+    const max = parseInt(height)
     const rangeNumber = parseInt(range)
-    min = max - rangeNumber
+    const min = max - rangeNumber
     if (fields) {
       const fieldList = fields.split(',')
       if (fieldList.length !== 0) {
@@ -40,30 +40,51 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
 // gets latest block
 networkRouter.get('/block', async (req, res) => {
   try {
-    const { height, range, fields } = req.params 
-    const queryOpts = {}
-    if (!height || !range) throw new Error('No height or range field specified')
-    let max, min
-    max = parseInt(height)
-    const rangeNumber = parseInt(range)
-    min = max - rangeNumber    
-    queryOpts.where = {
-      height: {
-        [Op.gt]: min,
-        [Op.lte]: max
-      }
-    }
-    if (fields) {
-      const fieldList = fields.split(',')
-      if (fieldList.length !== 0) {
-        queryOpts.attributes = fieldList
-      }
-    }
-    const blocks = await Block.findAll(queryOpts)
-    res.json(blocks)
+    const connection = getConnection()
+    const query = `SELECT * FROM blocks WHERE height = (SELECT MAX(height) FROM blocks)`
+    connection.query(query, (error, results, field) => {
+      if (error) throw Error
+      console.log('results is: ', results)
+      res.json(...results)
+    })
   } catch (e) {
     console.log('Error is: ', e)
   }
 })
+
+networkRouter.get('/blocks/:height,:range/:fields?', (req, res) => {
+  try {
+    const connection = getConnection()
+    const { height, range, fields } = req.params
+
+    if (!height || !range) throw new Error('No height or range field specified')
+    const max = parseInt(height)
+    const rangeNumber = parseInt(range)
+    const min = max - rangeNumber
+    let fieldSyntax = '*'
+    if (fields) {
+      const fields2 = fields.split(',')
+      // const fields3 = fields2.map(field => connection.escape(field))
+      fieldSyntax = fields2.join(', ')
+    }
+    const query = 'SELECT ' + fieldSyntax + ' FROM blocks WHERE height > ' + connection.escape(min) + ' AND height <= ' + connection.escape(max)
+    console.log('query is: ', query)
+    connection.query(query, (error, results) => {
+      if (error) throw Error
+      // console.log('results is: ', results)
+      // console.log('fields are: ', fields)
+      results.map((item) => {
+        return {
+          
+        }
+      })
+      res.json(results)
+    })
+  } catch (e) {
+    console.log('Error is: ', e)
+  }
+})
+
+
 
 module.exports = networkRouter
