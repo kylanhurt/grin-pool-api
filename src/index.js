@@ -19,7 +19,9 @@ db.authenticate()
   })
 
 const networkRouter = require('./routes/networkRoutes.js')
+const poolRouter = require('./routes/poolRoutes.js')
 
 // just list all routers
 app.use('/grin', networkRouter)
+app.use('/pool', poolRouter)
 

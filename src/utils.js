@@ -10,14 +10,14 @@ export const getConnection = () => {
 }
 
 export const mergeBlocks = (results) => {
-  let output = []
+  const output = []
   results.forEach((resultsRow) => {
     const index = output.findIndex(outputRow => outputRow.height === resultsRow.height)
+    // if it's a new row for the block
     if (index === -1) {
-      output.push({ 
-        difficulty: resultsRow.difficulty,
-        timestamp: resultsRow.timestamp,
-        height: resultsRow.height,
+      // console.log('resultsRow is: ', resultsRow)
+      output.push({
+        ...resultsRow,
         gps: [
           {
             edge_bits: resultsRow.edge_bits,
@@ -26,6 +26,7 @@ export const mergeBlocks = (results) => {
         ]
       })
     } else {
+      // console.log('in else clause, output is: ', output, ' and index is: ', index)
       output[index].gps.push({
         edge_bits: resultsRow.edge_bits,
         gps: resultsRow.gps
@@ -33,4 +34,18 @@ export const mergeBlocks = (results) => {
     }
   })
   return output
+}
+
+export const filterFields = (fields, results) => {
+  const fieldsList = fields.split(',')
+  if (fieldsList.length > 0) {
+    const filteredResults = results.map((item) => {
+      let filteredItem = {}
+      fieldsList.forEach(field => {
+        filteredItem[field] = item[field]
+      })
+      return filteredItem
+    })
+    return filteredResults
+  }
 }

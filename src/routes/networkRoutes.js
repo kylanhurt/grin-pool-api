@@ -13,12 +13,6 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     const max = parseInt(height)
     const rangeNumber = parseInt(range)
     const min = max - rangeNumber
-    if (fields) {
-      const fieldList = fields.split(',')
-      if (fieldList.length !== 0) {
-        queryOpts.attributes = fieldList
-      }
-    }
     const query = `SELECT grin_stats.difficulty, UNIX_TIMESTAMP(grin_stats.timestamp) as timestamp, grin_stats.height, gps.edge_bits, gps.gps
       FROM grin_stats JOIN gps ON grin_stats.height = gps.grin_stats_id
       WHERE grin_stats.height > ${connection.escape(min)} AND grin_stats.height <= ${connection.escape(max)}`
@@ -64,17 +58,19 @@ networkRouter.get('/blocks/:height,:range/:fields?', (req, res) => {
     const query = `SELECT * FROM blocks WHERE height > ${connection.escape(min)} AND height <= ${connection.escape(max)}`
     connection.query(query, (error, results) => {
       if (error) throw Error
-      const fieldsList = fields.split(',')
-      if (fieldsList.length > 0) {
-        const filteredResults = results.map((item) => {
-          let filteredItem = {}
-          fieldsList.forEach(field => {
-            filteredItem[field] = item[field]
+      if (fields) {
+        const fieldsList = fields.split(',')
+        if (fieldsList.length > 0) {
+          const filteredResults = results.map((item) => {
+            let filteredItem = {}
+            fieldsList.forEach(field => {
+              filteredItem[field] = item[field]
+            })
+            return filteredItem
           })
-          return filteredItem
-        })
-        res.json(filteredResults)
-        return
+          res.json(filteredResults)
+          return
+        }
       }
       res.json(results)
     })
