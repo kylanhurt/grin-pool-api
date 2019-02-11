@@ -49,3 +49,12 @@ export const filterFields = (fields, results) => {
     return filteredResults
   }
 }
+
+export const limitRange = (range) => {
+  const maxRange = 120
+  const defaultRange = 120
+  let reducedRange = defaultRange
+  if (range) reducedRange = range
+  if (range > maxRange) reducedRange = maxRange
+  return reducedRange
+}
