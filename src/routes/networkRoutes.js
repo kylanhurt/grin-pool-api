@@ -1,5 +1,4 @@
 const networkRouter = require('express').Router()
-const db = require('../config/database.js')
 // var cache = require('express-redis-cache')()
 import { getConnection, mergeBlocks } from '../utils.js'
 

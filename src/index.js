@@ -1,5 +1,5 @@
 const app = require('express')()
-const db = require('./config/database.js')
+const bodyParser = require('body-parser')
 
 export const PORT = 3009
 
@@ -10,18 +10,13 @@ app.listen(PORT, () => {
   console.log('Time is: ', date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds())
 })
 
-db.authenticate()
-  .then(() => {
-    console.log('database connected')
-  })
-  .catch((e) => {
-    console.log('Error:', e)
-  })
-
 const networkRouter = require('./routes/networkRoutes.js')
 const poolRouter = require('./routes/poolRoutes.js')
+
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true}))
+
 
 // just list all routers
 app.use('/grin', networkRouter)
 app.use('/pool', poolRouter)
-

@@ -1,5 +1,4 @@
 const poolRouter = require('express').Router()
-const db = require('../config/database.js')
 // var cache = require('express-redis-cache')()
 import { getConnection, mergeBlocks, filterFields, limitRange } from '../utils.js'
 
@@ -62,6 +61,10 @@ poolRouter.get('/blocks/:height,:range?', (req, res) => {
   } catch (error) {
     console.log('Error is: ', e)
   }
+})
+
+poolRouter.post('/users', (req, res) => {
+  console.log('req.body is: ', req.body)
 })
 
 module.exports = poolRouter
