@@ -21,7 +21,7 @@ workerRouter.get('/stats/:id/:height,:range/:fields?', (req, res) => {
       WHERE ps.height > ${connection.escape(min)} AND ps.height <= ${connection.escape(max)}`
     console.log('query is: ', query)
     connection.query(query, (error, results) => {
-      if (error) throw Error
+      if (error) throw Error(error)
       if (fields) results = filterFields(fields, results)
       const output = mergeBlocks(results)
       res.json(output)

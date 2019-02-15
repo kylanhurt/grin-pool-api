@@ -19,7 +19,7 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     connection.query(
       query,
       (error, results, field) => {
-        if (error) throw Error
+        if (error) throw Error(error)
         // console.log('results is: ', results)
         const output = mergeBlocks(results)
         res.json(output)
@@ -36,7 +36,7 @@ networkRouter.get('/block', async (req, res) => {
     const connection = getConnection()
     const query = `SELECT * FROM blocks WHERE height = (SELECT MAX(height) FROM blocks)`
     connection.query(query, (error, results, field) => {
-      if (error) throw Error
+      if (error) throw Error(error)
       // console.log('results is: ', results)
       res.json(...results)
     })
@@ -56,7 +56,7 @@ networkRouter.get('/blocks/:height,:range/:fields?', (req, res) => {
     const min = max - rangeNumber
     const query = `SELECT * FROM blocks WHERE height > ${connection.escape(min)} AND height <= ${connection.escape(max)}`
     connection.query(query, (error, results) => {
-      if (error) throw Error
+      if (error) throw Error(error)
       if (fields) {
         const fieldsList = fields.split(',')
         if (fieldsList.length > 0) {
