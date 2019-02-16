@@ -16,12 +16,18 @@ export const getConnection = () => {
 
 export const checkAuth = (req, res, next) => {
   try {
-    console.log('checking auth, req is: ', req)
+    console.log('req.token is: ', req.token)
     const decoded = jwt.verify(req.token, secretKey)
-    // console.log('decoded is: ', decoded)
+    console.log('decoded is: ', decoded)    
     req.userData = decoded
+    if (decoded.id !== parseInt(req.params.id)) {
+      console.log('ids do not match')
+      res.json({ message: 'Cannot access that user data' }).end()
+      return
+    }
     next()
   } catch (e) {
+    console.log('checkAuth rejects: ', e)
     return res.status(401).json({ message: e })
   }
 }
@@ -32,7 +38,6 @@ export const mergeBlocks = (results) => {
     const index = output.findIndex(outputRow => outputRow.height === resultsRow.height)
     // if it's a new row for the block
     if (index === -1) {
-      // console.log('resultsRow is: ', resultsRow)
       output.push({
         ...resultsRow,
         gps: [
@@ -84,9 +89,9 @@ export const hashPassword = (username, password) => {
     console.log('(hash) hashPassword query is: ', query)
       connection.query(query, (err, results) => {
         if (err) reject(err)
-        //console.log('(hash) results are : ', results)
+        console.log('(hash) results are : ', results)
         if (results.length !== 1) reject('Erroneous DB results')
-        //console.log('results : ', results)
+        console.log('results : ', results)
         const fullPassword = results[0].extra1
         console.log('(hash) fullPassword is: ', fullPassword)
         const salt = fullPassword.split('$')[3]
