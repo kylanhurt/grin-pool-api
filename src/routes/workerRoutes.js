@@ -1,14 +1,10 @@
 const workerRouter = require('express').Router()
 const basicAuth = require('express-basic-auth')
-// var cache = require('express-redis-cache')()
-import { getConnection, mergeBlocks, filterFields, limitRange } from '../utils.js'
 
-// gets network data for a range of blocks
-workerRouter.get('/stats/:id/:height,:range/:fields?', (req, res) => {
+import { getConnection, mergeBlocks, filterFields, limitRange, checkAuth } from '../utils.js'
+
+workerRouter.get('/stats/:id/:height,:range/:fields?', checkAuth, (req, res) => {
   try {
-    basicAuth({
-      
-    })
     const connection = getConnection()
     const { height, range, fields } = req.params
 

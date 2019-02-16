@@ -1,6 +1,8 @@
 const poolRouter = require('express').Router()
 // var cache = require('express-redis-cache')()
-import { getConnection, mergeBlocks, filterFields, limitRange } from '../utils.js'
+import { getConnection, mergeBlocks, filterFields, limitRange, hashPassword } from '../utils.js'
+import jwt from 'jsonwebtoken'
+import { secretKey } from '../index.js'
 const pbkdf2 = require('pbkdf2')
 const crypto = require('crypto')
 const basicAuth = require('express-basic-auth')
@@ -72,24 +74,30 @@ poolRouter.get('/blocks/:height,:range?', (req, res) => {
 })
 
 poolRouter.get('/users', (req, res) => {
+  const connection = getConnection()
   const auth = req.headers['authorization']
   const encodedString = auth.replace('Basic ', '')
-  console.log('encodedString is: ', encodedString)
+  //console.log('(users) encodedString is: ', encodedString)
   // const decoded = new Buffer(encodedString, 'utf-8')
   const decoded1 = new Buffer(encodedString, 'base64').toString()
   // const decoded2 = Base64.decode(encodedString)
-  console.log('Authorization header is: ', auth, ' and decoded1 is: ', decoded1)
-  const [username, password] = decoded1.splice(':')
-  console.log('username is: ', username, ' and password: ', password)
+  //console.log('Authorization header is: ', auth, ' and decoded1 is: ', decoded1)
+  const [username, password] = decoded1.split(':')
+  //console.log('(users)username is: ', username, ' and password: ', password)
+  hashPassword(username, password)
+    .then((output) => {
+      const fullHashedPassword = output.fullHashedPassword
+      console.log('(users) fullHashedPassword is: ', fullHashedPassword)
+      const query = `SELECT * FROM users WHERE username = '${username}' AND extra1 = '${fullHashedPassword}'`
+      connection.query(query, (error, results) => {
+        console.log('verifying results: ', results)
+        jwt.sign({ id: results[0].id, username: results[0].username }, secretKey, { expiresIn: '1 hour'}, (err, token) => {
+          console.log('token is: ', token, ' and error is: ', err)
+          res.status(200).json({ token, id: results[0].id })
+        })        
+      })      
+    })
 })
-
-export const hashPassword = (password) => {
-  crypto.pbkdf2(password, salt, rounds, 64, 'sha512', (err, derivedKey) => {
-    if (err) throw new Error
-    const hashedPassword = derivedKey.toString('base64').toString().replace('=', '')
-    return hashedPassword
-  })
-}
 
 poolRouter.post('/users', (req, res) => {
   const { password, username } = req.body
@@ -122,9 +130,8 @@ poolRouter.post('/users', (req, res) => {
     })
   } catch (e) {
     console.log('error is: ', e)
-    res.status(500)    
+    res.status(500).json({ message: e})
   }
-
 })
 
 module.exports = poolRouter
