@@ -41,6 +41,7 @@ app.use('/worker', (req, res, next) => {
     const bearer = bearerHeader.split(' ')
     const bearerToken = bearer[1]
     req.token = bearerToken
+    console.log('index token verification going to next')
     next()
   } else {
     console.log('req.url is: ', req.url, ' and protected /worker request has no authorization')

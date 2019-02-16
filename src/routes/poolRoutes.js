@@ -96,7 +96,7 @@ poolRouter.get('/users', (req, res) => {
       connection.query(query, (error, results) => {
         console.log('verifying results: ', results)
         jwt.sign({ id: results[0].id, username: results[0].username }, secretKey, { expiresIn: '1 day'}, (err, token) => {
-          console.log('token is: ', token, ' and error is: ', err)
+          console.log('signed token is: ', token, ' and error is: ', err)
           res.status(200).json({ token, id: results[0].id })
         })        
       })      

@@ -33,11 +33,12 @@ workerRouter.get('/stat/:id/:fields?', checkAuth, (req, res) => {
     const { id, fields } = req.params
     const escapedId = connection.escape(id)
     const query = `SELECT valid_shares, invalid_shares, stale_shares, total_valid_shares, total_invalid_shares, total_stale_shares
-      FROM worker_stats WHERE user_id = ${escapedId} AND id = (SELECT max(id) FROM worker_stats WHERE user_id = ${escapedId} LIMIT 1`
+      FROM worker_stats WHERE user_id = ${escapedId} AND id = (SELECT max(id) FROM worker_stats WHERE user_id = ${escapedId}) LIMIT 1`
     console.log('query is: ', query)
     connection.query(query, (error, results) => {
       if (error) res.status(500).end()
       console.log('results are: ', results)
+      let output = results
       if (fields) output = filterFields(fields, results)
       res.json(output)
     })
@@ -53,7 +54,7 @@ workerRouter.get('/utxo/:id', checkAuth, (req, res) => {
     const escapedId = connection.escape(id)
     const query = `SELECT * FROM pool_utxo WHERE user_id = ${escapedId} LIMIT 1`
     connection.query(query, (err, results) => {
-      if (error) res.status(500).end()
+      if (err) res.status(500).end()
       delete results.id
       res.json(results)
     })
@@ -90,7 +91,7 @@ workerRouter.get('/payments/:id/:range', checkAuth, (req, res) => {
     const query = `SELECT * FROM pool_payment WHERE user_id = ${escapedId} ORDER BY timestamp DESC LIMIT ${escapedRange}`
     connection.query(query, (err, results) => {
       if (err) res.status(500).end({ message: err })
-      delete result.id
+      delete results.id
       res.json({ results })
     })
   } catch (e) {

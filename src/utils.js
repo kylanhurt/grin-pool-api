@@ -18,7 +18,7 @@ export const checkAuth = (req, res, next) => {
   try {
     console.log('req.token is: ', req.token)
     const decoded = jwt.verify(req.token, secretKey)
-    console.log('decoded is: ', decoded)    
+    console.log('checkAuth decoded is: ', decoded)    
     req.userData = decoded
     if (decoded.id !== parseInt(req.params.id)) {
       console.log('ids do not match')
