@@ -36,19 +36,19 @@ app.use(function(req, res, next) {
 })
 
 app.use('/worker', (req, res, next) => {
-  console.log('verifying token')
+  //console.log('verifying token')
   // get auth header value
   console.log('req.url is: ', req.url)
   const bearerHeader = req.headers.authorization
   const authorization = req.headers['authorization']
-  console.log('authorization is: ', authorization)
-  console.log('bearerHeader is: ', bearerHeader)
-  console.log('headers are: ', req.headers)
+  //console.log('authorization is: ', authorization)
+  //console.log('bearerHeader is: ', bearerHeader)
+  //.log('headers are: ', req.headers)
   if (typeof bearerHeader !== 'undefined') {
     const bearer = bearerHeader.split(' ')
     const bearerToken = bearer[1]
     req.token = bearerToken
-    console.log('index token verification going to next')
+    //console.log('index token verification going to next')
     next()
   } else {
     console.log('req.url is: ', req.url, ' and protected /worker request has no authorization')

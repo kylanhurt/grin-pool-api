@@ -13,7 +13,7 @@ describe('networkRoutes return correct info', () => {
       chai.request(server)
         .get('/grin/stats/2500,2/')
         .end((err, res) => {
-            console.log('res is: ', res.body, ' and err is: ', err)          
+            // console.log('res is: ', res.body, ' and err is: ', err)          
             res.should.have.status(200)
             res.body.should.be.a('array')
             res.body.should.be.eql(
