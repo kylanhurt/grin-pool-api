@@ -6,12 +6,18 @@ import { tokens, secretKey } from './index.js'
 const jwt = require('jsonwebtoken')
 
 export const getConnection = () => {
-  return mysql.createConnection({
+  const pool = mysql.createPool({
+    connectionLimit: 100,
     host     : 'localhost',
     user     : 'root',
     password : 'root',
     database : 'pool'
   })
+  console.log('pool.config.connectionLimit: ', pool.config.connectionLimit) // passed in max size of the pool
+  console.log('pool._freeConnections.length: ', pool._freeConnections.length) // number of free connections awaiting use
+  console.log('pool._allConnections.length: ', pool._allConnections.length) // number of connections currently created, including ones in use
+  console.log('pool._acquiringConnections.length: ', pool._acquiringConnections.length)
+  return pool
 }
 
 export const checkAuth = (req, res, next) => {
