@@ -5,11 +5,18 @@ const networkRouter = require('./routes/networkRoutes.js')
 const poolRouter = require('./routes/poolRoutes.js')
 const workerRouter = require('./routes/workerRoutes.js')
 const cors = require('cors')
+const config = require('config')
+const morgan = require('morgan')
 
 export const secretKey = 'xxxxyyyyyzzzzz'
 export const PORT = 3009
 
 app.use(cors())
+
+if(config.util.getEnv('NODE_ENV') !== 'test') {
+    // use morgan to log at command line
+    app.use(morgan('combined')) //'combined' outputs the Apache style LOGs
+}
 
 app.listen(PORT, () => {
   console.log('listening on port ' + PORT)
@@ -56,3 +63,5 @@ app.use(bodyParser.urlencoded({ extended: true}))
 app.use('/grin', networkRouter)
 app.use('/pool', poolRouter)
 app.use('/worker', workerRouter)
+
+module.exports = app

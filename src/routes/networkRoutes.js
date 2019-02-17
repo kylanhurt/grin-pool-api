@@ -1,6 +1,7 @@
 const networkRouter = require('express').Router()
 // var cache = require('express-redis-cache')()
 import { getConnection, mergeBlocks } from '../utils.js'
+import regeneratorRuntime from 'regenerator-runtime'
 
 // gets network data for a range of blocks
 networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {

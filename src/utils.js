@@ -2,13 +2,13 @@ const mysql = require('mysql')
 const pbkdf2 = require('pbkdf2')
 const crypto = require('crypto')
 import { tokens, secretKey } from './index.js'
-// import jwt from 'jsonwebtoken'
 const jwt = require('jsonwebtoken')
+const config = require('config')
 
 export const getConnection = () => {
   const pool = mysql.createPool({
     connectionLimit: 100,
-    host     : 'localhost',
+    host     : config.dbHost,
     user     : 'root',
     password : 'root',
     database : 'pool'
