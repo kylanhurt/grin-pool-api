@@ -4,7 +4,7 @@ import { getConnection, mergeBlocks } from '../utils.js'
 import regeneratorRuntime from 'regenerator-runtime'
 
 // gets network data for a range of blocks
-networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
+networkRouter.get('/stats/:height,:range/:fields?', (req, res, next) => {
   try {
     const { height, range, fields } = req.params
     const connection = getConnection()
@@ -13,6 +13,7 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     const max = parseInt(height)
     const rangeNumber = parseInt(range)
     const min = max - rangeNumber
+    if (range > max || max === 0) throw {statusCode: 400, message: 'Invalid block range'}
     const query = `SELECT grin_stats.difficulty, UNIX_TIMESTAMP(grin_stats.timestamp) as timestamp, grin_stats.height, gps.edge_bits, gps.gps
       FROM grin_stats JOIN gps ON grin_stats.height = gps.grin_stats_id
       WHERE grin_stats.height > ${connection.escape(min)} AND grin_stats.height <= ${connection.escape(max)}`
@@ -20,9 +21,7 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     connection.query(
       query,
       (error, results, field) => {
-        console.log('error is: ', error)
         if (error) throw { statusCode: 500, message: 'Query error' }
-        console.log('results is: ', results)
         const output = mergeBlocks(results)
         res.json(output)
       }
@@ -33,7 +32,7 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
 })
 
 // gets latest block
-networkRouter.get('/block', async (req, res) => {
+networkRouter.get('/block', async (req, res, next) => {
   try {
     const connection = getConnection()
     const query = `SELECT * FROM blocks WHERE height = (SELECT MAX(height) FROM blocks)`
@@ -47,7 +46,7 @@ networkRouter.get('/block', async (req, res) => {
   }
 })
 
-networkRouter.get('/blocks/:height,:range/:fields?', (req, res) => {
+networkRouter.get('/blocks/:height,:range/:fields?', (req, res, next) => {
   try {
     const connection = getConnection()
     const { height, range, fields } = req.params

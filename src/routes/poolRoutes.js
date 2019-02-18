@@ -32,7 +32,7 @@ poolRouter.get('/stats/:height,:range/:fields?', (req, res, next) => {
     const rangeNumber = parseInt(range)
     const min = max - rangeNumber
     console.log('max, rangeNumber, and min are: ', max, rangeNumber, min)
-    if (range > max || max === 0) throw {statusCode: 403, message: 'Invalid fields'}
+    if (range > max || max === 0) throw {statusCode: 400, message: 'Invalid fields'}
     const query = `SELECT ps.*, gps.gps, gps.edge_bits, UNIX_TIMESTAMP(ps.timestamp) as timestamp
       FROM pool_stats AS ps JOIN gps ON ps.height = gps.pool_stats_id
       WHERE ps.height > ${connection.escape(min)} AND ps.height <= ${connection.escape(max)}`
@@ -86,7 +86,7 @@ poolRouter.get('/blocks/:height,:range?', (req, res) => {
   }
 })
 
-poolRouter.get('/users', (req, res) => {
+poolRouter.get('/users', (req, res, next) => {
   try {
     const connection = getConnection()
     const auth = req.headers['authorization']
@@ -140,15 +140,7 @@ poolRouter.get('/users', (req, res) => {
   }
 })
 
-/*
-    reHashPassword(username, password)
-      .then(hashedPassword => {
-        console.log('hashedPassword is: ', hashedPassword)
-        const fullHashedPassword = hashedPassword.fullHashedPassword
-        console.log('(users) fullHashedPassword is: ', fullHashedPassword)  
-*/
-
-poolRouter.post('/users', upload.fields([]), (req, res) => {
+poolRouter.post('/users', upload.fields([]), (req, res, next) => {
   const { password, username } = req.body
   console.log('req.body is: ', req.body)
   const connection = getConnection()

@@ -3,7 +3,7 @@ const basicAuth = require('express-basic-auth')
 
 import { getConnection, mergeBlocks, filterFields, limitRange, checkAuth } from '../utils.js'
 
-workerRouter.get('/stats/:id/:height,:range/:fields?', checkAuth, (req, res) => {
+workerRouter.get('/stats/:id/:height,:range/:fields?', checkAuth, (req, res, next) => {
   try {
     const connection = getConnection()
     const { height, range, fields } = req.params
@@ -27,7 +27,7 @@ workerRouter.get('/stats/:id/:height,:range/:fields?', checkAuth, (req, res) => 
   }
 })
 
-workerRouter.get('/stat/:id/:fields?', checkAuth, (req, res) => {
+workerRouter.get('/stat/:id/:fields?', checkAuth, (req, res, next) => {
   try {
     const connection = getConnection()
     const { id, fields } = req.params
@@ -47,7 +47,7 @@ workerRouter.get('/stat/:id/:fields?', checkAuth, (req, res) => {
   }
 })
 
-workerRouter.get('/utxo/:id', checkAuth, (req, res) => {
+workerRouter.get('/utxo/:id', checkAuth, (req, res, next) => {
   try {
     const connection = getConnection()
     const { id } = req.params
@@ -81,7 +81,7 @@ workerRouter.get('/payment/:id', checkAuth, (req, res) => {
   }
 })
 
-workerRouter.get('/payments/:id/:range', checkAuth, (req, res) => {
+workerRouter.get('/payments/:id/:range', checkAuth, (req, res, next) => {
   try {
     const connection = getConnection()
     const { id, range } = req.params
@@ -99,7 +99,7 @@ workerRouter.get('/payments/:id/:range', checkAuth, (req, res) => {
   }
 })
 
-workerRouter.get('/estimate/payment/:id', checkAuth, (req, res) => {
+workerRouter.get('/estimate/payment/:id', checkAuth, (req, res, next) => {
   try {
     const { id } = req.body
     const connection = getConnection()
@@ -116,7 +116,7 @@ workerRouter.get('/estimate/payment/:id', checkAuth, (req, res) => {
   }
 })
 
-workerRouter.get('/estimate/payment/:id/:height', checkAuth, (req, res) => {
+workerRouter.get('/estimate/payment/:id/:height', checkAuth, (req, res, next) => {
   try {
     const { height, id } = req.params
     const connection = getConnection()
