@@ -9,7 +9,7 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     const { height, range, fields } = req.params
     const connection = getConnection()
     const queryOpts = {}
-    if (!height || !range) throw new Error('No height or range field specified')
+    if (!height || !range) throw { statusCode: 400, message: 'No height or range field specified' }
     const max = parseInt(height)
     const rangeNumber = parseInt(range)
     const min = max - rangeNumber
@@ -20,14 +20,15 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     connection.query(
       query,
       (error, results, field) => {
-        if (error) res.status(500).send('Query error')
-        // console.log('results is: ', results)
+        console.log('error is: ', error)
+        if (error) throw { statusCode: 500, message: 'Query error' }
+        console.log('results is: ', results)
         const output = mergeBlocks(results)
         res.json(output)
       }
     )
   } catch (e) {
-    console.log('Error is: ', e)
+    next(e)
   }
 })
 
@@ -42,7 +43,7 @@ networkRouter.get('/block', async (req, res) => {
       res.json(...results)
     })
   } catch (e) {
-    console.log('Error is: ', e)
+    next(e)
   }
 })
 
@@ -51,13 +52,13 @@ networkRouter.get('/blocks/:height,:range/:fields?', (req, res) => {
     const connection = getConnection()
     const { height, range, fields } = req.params
 
-    if (!height || !range) throw new Error('No height or range field specified')
+    if (!height || !range) throw { statusCode: 400, message: 'No height or range field specified' }
     const max = parseInt(height)
     const rangeNumber = parseInt(range)
     const min = max - rangeNumber
-    const query = `SELECT * FROM blocks WHERE height > ${connection.escape(min)} AND height <= ${connection.escape(max)}`
+    const query = `SELECT *, UNIX_TIMESTAMP(timestamp) as timestamp FROM blocks WHERE height > ${connection.escape(min)} AND height <= ${connection.escape(max)}`
     connection.query(query, (error, results) => {
-      if (error) throw Error(error)
+      if (error) throw { statusCode: 500, message: 'Query error' }
       if (fields) {
         const fieldsList = fields.split(',')
         if (fieldsList.length > 0) {
@@ -75,7 +76,7 @@ networkRouter.get('/blocks/:height,:range/:fields?', (req, res) => {
       res.json(results)
     })
   } catch (e) {
-    console.log('Error is: ', e)
+    next(e)
   }
 })
 

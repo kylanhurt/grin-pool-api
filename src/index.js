@@ -52,7 +52,7 @@ app.use('/worker', (req, res, next) => {
     next()
   } else {
     console.log('req.url is: ', req.url, ' and protected /worker request has no authorization')
-    res.status(403).end()
+    res.status(403).send('No authorization')
   }
 })
 
@@ -64,8 +64,24 @@ app.use('/grin', networkRouter)
 app.use('/pool', poolRouter)
 app.use('/worker', workerRouter)
 
-app.on('uncaughtException', (err) => {
-  console.log('Uncaught exception: ', err)
+app.get('*', function(req, res, next) {
+  const err = new Error('Page Not Found')
+  err.statusCode = 404
+  next(err);
 })
+
+// error-handling
+app.use(function(err, req, res, next) {
+  if (!err.statusCode) err.statusCode = 500 // If err has no specified error code, set error code to 'Internal Server Error (500)'
+  //res.status(err.status || 500)
+  console.log('err.statusCode is: ', err.statusCode, ' and err.message: ', err.message)
+  res.status(err.statusCode).send(err.message) // All HTTP requests must have a response, so let's send back an error with its status code and message
+})
+
+app.on('uncaughtException', (err) => {
+  console.log('Uncaught exception: ', JSON.toString(err))
+})
+
+
 
 module.exports = app

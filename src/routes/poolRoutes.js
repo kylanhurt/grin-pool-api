@@ -21,21 +21,24 @@ const upload = multer()
 const hashPasswordLegacy = require('../hashPasswordLegacy.js')
 
 // gets network data for a range of blocks
-poolRouter.get('/stats/:height,:range/:fields?', (req, res) => {
+poolRouter.get('/stats/:height,:range/:fields?', (req, res, next) => {
   try {
     const connection = getConnection()
     const { height, range, fields } = req.params
 
-    if (!height || !range) res.status(400).send('No height or range field specified')
+    if (!height || !range) throw { statusCode: 400, message: 'No height or range field specified' }
+    console.log('height and range are specified')
     const max = parseInt(height)
     const rangeNumber = parseInt(range)
     const min = max - rangeNumber
-    if (range > max || max === 0) res.status(400).send('Block range incorrect')
+    console.log('max, rangeNumber, and min are: ', max, rangeNumber, min)
+    if (range > max || max === 0) throw {statusCode: 403, message: 'Invalid fields'}
     const query = `SELECT ps.*, gps.gps, gps.edge_bits, UNIX_TIMESTAMP(ps.timestamp) as timestamp
       FROM pool_stats AS ps JOIN gps ON ps.height = gps.pool_stats_id
       WHERE ps.height > ${connection.escape(min)} AND ps.height <= ${connection.escape(max)}`
     console.log('query is: ', query)
     connection.query(query, (error, results) => {
+      console.log('query error is: ', error)
       if (error) throw Error(error)
       console.log('fields are: ', fields)
       if (fields) results = filterFields(fields, results)
@@ -43,8 +46,7 @@ poolRouter.get('/stats/:height,:range/:fields?', (req, res) => {
       res.json(output)
     })
   } catch (e) {
-    console.log('Error is: ', e)
-    res.status(500).send(e)
+    next(e)
   }
 })
 
@@ -62,8 +64,7 @@ poolRouter.get('/block', (req, res) => {
       res.json(...results)      
     })
   } catch (e) {
-    console.log('Error is: ', e)
-    res.status(500).send(e)
+    next(e)
   }
 }) 
 
@@ -81,8 +82,7 @@ poolRouter.get('/blocks/:height,:range?', (req, res) => {
       res.json(results)
     })
   } catch (error) {
-    console.log('Error is: ', e)
-    res.status(500).send(e)
+    next(e)
   }
 })
 
@@ -104,16 +104,16 @@ poolRouter.get('/users', (req, res) => {
     console.log('findUserQuery is: ', findUserQuery)
     connection.query(findUserQuery, (findUserError, findUserResults) => {
       console.log('findUserResults is: ', findUserResults)
-      if (findUserError || findUserResults.length !== 1) res.status(500).send('Find user error') // .json message: 'Error finding user'})
+      if (findUserError || findUserResults.length !== 1) throw {statusCode: 500, message: 'Find user error'}
       const db = findUserResults[0]
       console.log('db is: ', db)
       if (db.extra1) {
         const hashedPassword = getPasswordFromFullPassword(db, enteredPassword)
         console.log('hashedPassword.fullHashedPassword is: ', hashedPassword.fullHashedPassword)
         console.log('db.extra1 is: ', db.extra1)
-        if (hashedPassword.fullHashedPassword !== db.extra1) res.status(403).send('Invalid credentials') // .json message: 'Invalid credentials'})
+        if (hashedPassword.fullHashedPassword !== db.extra1) throw { statusCode: 403, message: 'Invalid credentials'}
         jwt.sign({ id: db.id, username: db.username }, secretKey, { expiresIn: '1 day'}, (err, token) => {
-          if (err) res.status(500).send('Error signing data') // .json message: 'Error signing data'})
+          if (err) throw { statusCode: 500, message: 'Error signing data'}
           console.log('signed token is: ', token, ' and error is: ', err)
           res.status(200).json({ token, id: db.id })
         })
@@ -121,13 +121,13 @@ poolRouter.get('/users', (req, res) => {
         hashPasswordLegacy(password) // hash password using old legacy password scheme
           .then((legacyPassword) => {
             console.log('returned legacyPassword is: ', legacyPassword)
-            if (db.password !== legacyPassword) res.status(403).send('Invalid credentials') //.json({ message: 'Invalid credentials'})
+            if (db.password !== legacyPassword) throw { statusCode: 403, message: 'Invalid credentials'}
             const newHashedPassword = createHashedPassword(enteredPassword)
             const insertNewPasswordQuery = `UPDATE users SET extra1 = ${newHashedPassword} WHERE id = ${db.id} LIMIT 1`
             connection.query(insertNewPasswordQuery, (err, insertNewPasswordResults) => {
-              if (insertNewPasswordResults.affectedRows !== 1) res.status(500).send('Error inserting new password')
+              if (insertNewPasswordResults.affectedRows !== 1) throw { statusCode: 500, message: 'Error inserting new password' }
               jwt.sign({ id: db.id, username: db.username }, secretKey, { expiresIn: '1 day'}, (err, token) => {
-                if (err) res.status(500).send('Problem signing data') // .json message: 'Problem signing data'})
+                if (err) throw { statusCode: 500, message: 'Problem signing data' }
                 console.log('signed token is: ', token, ' and error is: ', err)
                 res.status(200).json({ token, id: db.id })
               })                
@@ -136,7 +136,7 @@ poolRouter.get('/users', (req, res) => {
       }
     })
   } catch (e) {
-    res.status(500).send(e) // .json message: e})
+    next(e) // .json message: e})
   }
 })
 
@@ -162,7 +162,7 @@ poolRouter.post('/users', upload.fields([]), (req, res) => {
     crypto.pbkdf2(password, salt, rounds, 64, 'sha512', (err, derivedKey) => {
       if (err) {
         console.log('crypto.pbkdf2 error: ', err)
-        res.status(500).send(err)
+        throw { statusCode: 500, message: 'Problem signing data'}
       }
       const hashedPassword = derivedKey.toString('base64').toString().replace(/\=/g,'')
       const fullHashedPassword = `$6$rounds=${rounds}$${salt}$${hashedPassword}`
@@ -183,8 +183,7 @@ poolRouter.post('/users', upload.fields([]), (req, res) => {
       })
     })
   } catch (e) {
-    console.log('error is: ', e)
-    res.status(500).send(e)// .json message: e})
+    next(e)
   }
 })
 
