@@ -5,12 +5,14 @@ import { tokens, secretKey } from './index.js'
 const jwt = require('jsonwebtoken')
 const config = require('config')
 
+export const numberRounds = 656000
+
 export const getConnection = () => {
   const pool = mysql.createPool({
     connectionLimit: 100,
     host     : config.dbHost,
     user     : 'root',
-    password : 'root',
+    password : 'root', // 'fdA4adfsp^6zv=',
     database : 'pool'
   })
   console.log('pool.config.connectionLimit: ', pool.config.connectionLimit) // passed in max size of the pool
@@ -87,27 +89,39 @@ export const limitRange = (range) => {
   return reducedRange
 }
 
-export const hashPassword = (username, password) => {
+export const reHashPassword = (username, password) => {
   return new Promise ((resolve, reject) => {
     const connection = getConnection()
-    const rounds = 656000
     const query = `SELECT * FROM users WHERE username = '${username}'`
     console.log('(hash) hashPassword query is: ', query)
       connection.query(query, (err, results) => {
-        if (err) reject(err)
+        if (err) reject(err) // reject if query error
         console.log('(hash) results are : ', results)
-        if (results.length !== 1) reject('Erroneous DB results')
-        console.log('results : ', results)
-        const fullPassword = results[0].extra1
-        console.log('(hash) fullPassword is: ', fullPassword)
-        const salt = fullPassword.split('$')[3]
-        console.log('(hash) salt is: ', salt)
-        const derivedKey = crypto.pbkdf2Sync(password, salt, 656000, 64, 'sha512')
-        console.log('(hash) derivedKey is: ', derivedKey)      
-        const modifiedPassword = derivedKey.toString('base64').toString().replace(/\=/g,'')
-        const fullHashedPassword = `$6$rounds=${rounds}$${salt}$${modifiedPassword}`
-        console.log('(hash) reencrypted modifiedPassword is: ', modifiedPassword)
-        resolve({ modifiedPassword, fullHashedPassword })
+        if (results.length !== 1) reject('Erroneous DB results') // if more than one username then exit
+        return getPasswordFromFullPassword(results[0].extra1)
       })
   })
+}
+
+
+export const getPasswordFromFullPassword = (userRow, enteredPassword) => {
+  const fullPassword = userRow.extra1 // grab the extra1 field
+  console.log('(getPassword) fullPassword is: ', fullPassword)
+  const salt = fullPassword.split('$')[3] // grab the password portion
+  console.log('(getPassword) salt is: ', salt)
+  const derivedKey = crypto.pbkdf2Sync(enteredPassword, salt, numberRounds, 64, 'sha512') // derive the key
+  console.log('(getPassword) derivedKey is: ', derivedKey)      
+  const modifiedPassword = derivedKey.toString('base64').toString().replace(/\=/g,'') // put in acceptable format
+  const fullHashedPassword = `$6$rounds=${numberRounds}$${salt}$${modifiedPassword}` // final form
+  console.log('(getPassword) reencrypted modifiedPassword is: ', modifiedPassword)
+  return ({ modifiedPassword, fullHashedPassword }) // return both formats  
+}
+
+export const createHashedPassword = (password) => {
+  const salt = crypto.randomBytes(16)
+  const derivedKey = crypto.pbkdf2Sync(password, salt, numberRounds, 64, 'sha512') // derive the key
+  console.log('(createHash) derivedKey is: ', derivedKey)      
+  const modifiedPassword = derivedKey.toString('base64').toString().replace(/\=/g,'') // put in acceptable format
+  const fullHashedPassword = `$6$rounds=${numberRounds}$${salt}$${modifiedPassword}` // final form
+  resolve({ modifiedPassword, fullHashedPassword })
 }

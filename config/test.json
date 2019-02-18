@@ -1,3 +1,4 @@
 {
-  "dbHost": "localhost"
+  "dbHost": "localhost",  // "35.185.226.16",
+  "dbPassword": "root", // "fdA4adfsp^6zv="
 }

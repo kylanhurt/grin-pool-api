@@ -128,7 +128,7 @@ workerRouter.get('/estimate/payment/:id/:height', checkAuth, (req, res) => {
     const query = `SELECT * FROM worker_stats JOIN gps ON worker_stats.id = gps.worker_stats_id
                   WHERE worker_stats.user_id = ${escapedId} AND worker_stats.height > ${min}`
     console.log('query is: ', query)
-    connection.query(query, (err, result) => {
+    connection.query(query, (err, results) => {
       if (err) res.status(500).end({ message: err })
       res.json(results)
     })
