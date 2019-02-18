@@ -64,4 +64,8 @@ app.use('/grin', networkRouter)
 app.use('/pool', poolRouter)
 app.use('/worker', workerRouter)
 
+app.on('uncaughtException', (err) => {
+  console.log('Uncaught exception: ', err)
+})
+
 module.exports = app

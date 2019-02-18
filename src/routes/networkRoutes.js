@@ -20,7 +20,7 @@ networkRouter.get('/stats/:height,:range/:fields?', async (req, res) => {
     connection.query(
       query,
       (error, results, field) => {
-        if (error) throw Error(error)
+        if (error) res.status(500).send('Query error')
         // console.log('results is: ', results)
         const output = mergeBlocks(results)
         res.json(output)

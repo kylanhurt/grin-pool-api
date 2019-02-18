@@ -8,7 +8,7 @@ workerRouter.get('/stats/:id/:height,:range/:fields?', checkAuth, (req, res) => 
     const connection = getConnection()
     const { height, range, fields } = req.params
 
-    if (!height || !range) res.status(500).json({ message: 'No height or range field specified' }).end()
+    if (!height || !range) res.status(400).send('No height or range field specified')
     const max = parseInt(height)
     const rangeNumber = parseInt(range)
     const min = max - rangeNumber
@@ -17,13 +17,13 @@ workerRouter.get('/stats/:id/:height,:range/:fields?', checkAuth, (req, res) => 
       WHERE ps.height > ${connection.escape(min)} AND ps.height <= ${connection.escape(max)}`
     console.log('query is: ', query)
     connection.query(query, (error, results) => {
-      if (error)res.status(500).end()
+      if (error)res.status(500).send('Query error')
       if (fields) results = filterFields(fields, results)
       const output = mergeBlocks(results)
       res.json(output)
     })
   } catch (e) {
-    res.status(500).json({ message: e })
+    res.status(500).send(e)
   }
 })
 
@@ -36,7 +36,7 @@ workerRouter.get('/stat/:id/:fields?', checkAuth, (req, res) => {
       FROM worker_stats WHERE user_id = ${escapedId} AND id = (SELECT max(id) FROM worker_stats WHERE user_id = ${escapedId}) LIMIT 1`
     console.log('query is: ', query)
     connection.query(query, (error, results) => {
-      if (error) res.status(500).end()
+      if (error) res.status(500).send(error)
       console.log('results are: ', results)
       let output = results
       if (fields) output = filterFields(fields, results)
@@ -54,12 +54,12 @@ workerRouter.get('/utxo/:id', checkAuth, (req, res) => {
     const escapedId = connection.escape(id)
     const query = `SELECT * FROM pool_utxo WHERE user_id = ${escapedId} LIMIT 1`
     connection.query(query, (err, results) => {
-      if (err) res.status(500).end()
+      if (err) res.status(500).send('Query error')
       delete results.id
       res.json(results)
     })
   } catch (e) {
-    res.status(500).json({ message: e })
+    res.status(500).send(e)
   }
 })
 
@@ -72,7 +72,7 @@ workerRouter.get('/payment/:id', checkAuth, (req, res) => {
       AND timestamp = max(SELECT timestamp FROM pool_payment
       WHERE user_id = ${escapedId}) LIMIT 1`
     connection.query(query, (err, result) => {
-      if (err) res.status(500).end({ message: e })
+      if (err) res.status(500).end('Query error')
       delete result.id
       res.json({ result })
     })
@@ -85,12 +85,12 @@ workerRouter.get('/payments/:id/:range', checkAuth, (req, res) => {
   try {
     const connection = getConnection()
     const { id, range } = req.params
-    if (!range) res.status(500).json({ message: 'No block range set' })
+    if (!range) res.status(400).send('No block range set')
     const escapedRange = connection.escape(parseInt(range))
     const escapedId = connection.escape(id)
     const query = `SELECT * FROM pool_payment WHERE user_id = ${escapedId} ORDER BY timestamp DESC LIMIT ${escapedRange}`
     connection.query(query, (err, results) => {
-      if (err) res.status(500).end({ message: err })
+      if (err) res.status(500).send('Query error')
       delete results.id
       res.json({ results })
     })
@@ -107,12 +107,12 @@ workerRouter.get('/estimate/payment/:id', checkAuth, (req, res) => {
     const query = `SELECT locked FROM pool_utxo WHERE user_id = ${escapedId}
                   AND id = (SELECT max(id) from pool_utxo WHERE user_id = ${escapedId}) LIMIT 1`
     connection.query(query, (err, result) => {
-      if (err) res.status(500).end({ message: err })
+      if (err) res.status(500).send('Query error')
       delete result.id
       res.json(result.locked)
     })
   } catch (e) {
-    res.status(500).json({ message: e })
+    res.status(500).send(e)
   }
 })
 
@@ -120,7 +120,7 @@ workerRouter.get('/estimate/payment/:id/:height', checkAuth, (req, res) => {
   try {
     const { height, id } = req.params
     const connection = getConnection()
-    if (!height) throw new Error('No height or range field specified')
+    if (!height) res.status(400).send('No height or range field specified')
     const escapedId = connection.escape(id)
     const max = parseInt(height)
     const rangeNumber = 60
@@ -129,11 +129,11 @@ workerRouter.get('/estimate/payment/:id/:height', checkAuth, (req, res) => {
                   WHERE worker_stats.user_id = ${escapedId} AND worker_stats.height > ${min}`
     console.log('query is: ', query)
     connection.query(query, (err, results) => {
-      if (err) res.status(500).end({ message: err })
+      if (err) res.status(500).end('Query error')
       res.json(results)
     })
   } catch (e) {
-    res.status(500).json({ message: e })
+    res.status(500).send(e)
   }
 })
 
