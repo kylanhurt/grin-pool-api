@@ -25,10 +25,6 @@ app.listen(PORT, () => {
   console.log('Time is: ', date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds())
 })
 
-app.get('/test/token', (req, res) => {
-  res.json({ message: 'post created'})
-})
-
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*")
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
@@ -58,6 +54,25 @@ app.use('/worker', (req, res, next) => {
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true}))
+
+  //app.use('/*/stats/:height,:range', (req, res, next) => {
+  /* if (req.params) {
+    if (parseInt(req.params.height) < 0) {
+      res.locals.height = '0'
+
+    }
+    if (parseInt(req.params.range) > 120 || !req.params.range) {
+      res.locals.range = '120'
+    }
+    if (parseInt(req.params.range) > req.params.height) {
+      res.locals.range = res.locals.height || req.params.height
+    }
+
+  }
+
+  console.log('res.locals is now: ', res.locals)
+  next()
+}) */
 
 // just list all routers
 app.use('/grin', networkRouter)

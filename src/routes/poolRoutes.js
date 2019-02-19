@@ -23,27 +23,32 @@ const hashPasswordLegacy = require('../hashPasswordLegacy.js')
 // gets network data for a range of blocks
 poolRouter.get('/stats/:height,:range/:fields?', (req, res, next) => {
   try {
+    const { range, height, fields } = req.params
     const connection = getConnection()
-    const { height, range, fields } = req.params
-
-    if (!height || !range) throw { statusCode: 400, message: 'No height or range field specified' }
-    console.log('height and range are specified')
-    const max = parseInt(height)
-    const rangeNumber = parseInt(range)
-    const min = max - rangeNumber
-    console.log('max, rangeNumber, and min are: ', max, rangeNumber, min)
-    if (range > max || max === 0) throw {statusCode: 400, message: 'Invalid fields'}
-    const query = `SELECT ps.*, gps.gps, gps.edge_bits, UNIX_TIMESTAMP(ps.timestamp) as timestamp
+    const actualHeight = parseInt(height) < 1 ? 1 : parseInt(height) // is the height less than 1? Then use 1
+    let actualRange = (parseInt(range) > actualHeight) ? actualHeight : parseInt(range) // range too big? limit to max
+    if (actualRange > 120) actualRange = 120
+    if (!actualHeight || !actualRange) throw { statusCode: 400, message: 'Invalid height or range field specified' }
+    // but if max is zero then it should find max
+    const min = actualHeight - actualRange
+    const maxHeightQuery = `SELECT max(height) as maxHeight FROM blocks LIMIT 1`
+    connection.query(maxHeightQuery, (err, maxHeightResults) => {
+      if (!maxHeightResults[0].maxHeight) throw { statusCode: 500, message: 'Query error'}
+      const maxHeight = maxHeightResults[0].maxHeight
+      const finalHeight = actualHeight > maxHeight ? maxHeight : actualHeight
+    const poolStatsQuery = `SELECT ps.*, gps.gps, gps.edge_bits, UNIX_TIMESTAMP(ps.timestamp) as timestamp
       FROM pool_stats AS ps JOIN gps ON ps.height = gps.pool_stats_id
-      WHERE ps.height > ${connection.escape(min)} AND ps.height <= ${connection.escape(max)}`
-    console.log('query is: ', query)
-    connection.query(query, (error, results) => {
-      console.log('query error is: ', error)
-      if (error) throw Error(error)
-      console.log('fields are: ', fields)
-      if (fields) results = filterFields(fields, results)
-      const output = mergeBlocks(results)
-      res.json(output)
+      WHERE ps.height > ${min} AND ps.height <= ${finalHeight}`
+      console.log('poolStatsQuery is: ', poolStatsQuery)
+      connection.query(
+        poolStatsQuery,
+        (error, poolStatsResults, field) => {
+          if (error) throw { statusCode: 500, message: 'Query error' }
+          console.log('poolStatsResults: '. poolStatsResults)
+          const output = mergeBlocks(poolStatsResults)
+          res.json(output)
+        }
+      )      
     })
   } catch (e) {
     next(e)

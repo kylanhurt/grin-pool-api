@@ -12,7 +12,7 @@ export const getConnection = () => {
     connectionLimit: 100,
     host     : config.dbHost,
     user     : 'root',
-    password : 'root', // 'fdA4adfsp^6zv=',
+    password : 'fdA4adfsp^6zv=', // 'fdA4adfsp^6zv=',
     database : 'pool'
   })
   //console.log('pool.config.connectionLimit: ', pool.config.connectionLimit) // passed in max size of the pool
